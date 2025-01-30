@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高糖培养基配制计算器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .calculator {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        select, input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>高糖培养基配制计算器 V4.0</h2>
+        
+        <div class="input-group">
+            <label>培养基类型：</label>
+            <select id="mediumType" onchange="updateBaseConcentration()">
+                <option value="MEM_5.5">MEM培养基(5.5mmol/L)</option>
+                <option value="DMEM_24.75">DMEM培养基(24.75mmol/L)</option>
+                <option value="DMEM_0">DMEM培养基(无糖)</option>
+                <option value="1640_11.1">1640培养基(11.1mmol/L)</option>
+                <option value="1640_0">1640培养基(无糖)</option>
+                <option value="custom">自定义</option>
+            </select>
+        </div>
+
+        <div class="input-group" id="baseConcentrationGroup" style="display: none;">
+            <label>基础糖浓度 (mmol/L)：</label>
+            <input type="number" id="baseConcentration" step="0.1">
+        </div>
+
+        <div class="input-group">
+            <label>配制量 (ml)：</label>
+            <input type="number" id="volume" value="1000">
+        </div>
+
+        <div class="input-group">
+            <label>目标浓度 (mmol/L)：</label>
+            <select id="targetConcentration">
+                <option value="40">40mmol/L</option>
+                <option value="30">30mmol/L</option>
+                <option value="20">20mmol/L</option>
+                <option value="10">10mmol/L</option>
+            </select>
+        </div>
+
+        <button onclick="calculate()">计算</button>
+
+        <div class="result" id="result">
+            <h3>计算结果：</h3>
+            <p>50%葡萄糖需要量：<span id="glucoseSolution">0</span> μl</p>
+            <p>甘露醇粉需要量：<span id="mannitol">0</span> g</p>
+            <p>D-葡萄糖粉需要量：<span id="glucosePowder">0</span> g</p>
+        </div>
+    </div>
+
+    <script>
+        const mediumData = {
+            "MEM_5.5": 5.5,
+            "DMEM_24.75": 24.75,
+            "DMEM_0": 0,
+            "1640_11.1": 11.1,
+            "1640_0": 0,
+            "custom": null
+        };
+
+        function updateBaseConcentration() {
+            const type = document.getElementById("mediumType").value;
+            const baseGroup = document.getElementById("baseConcentrationGroup");
+            baseGroup.style.display = type === "custom" ? "block" : "none";
+        }
+
+        function calculate() {
+            // 获取输入值
+            const type = document.getElementById("mediumType").value;
+            const volume = parseFloat(document.getElementById("volume").value);
+            const target = parseFloat(document.getElementById("targetConcentration").value);
+            
+            // 确定基础浓度
+            let base = mediumData[type];
+            if (type === "custom") {
+                base = parseFloat(document.getElementById("baseConcentration").value) || 0;
+            }
+
+            // 核心计算公式
+            const glucoseSolution = (( (volume/1000 * target) - (volume/1000 * base) ) / (2780 - base)) * 1000000;
+            
+            // 甘露醇系数映射
+            const mannitolCoefficient = {
+                40: 0.0395,
+                30: 0.0295,
+                20: 0.0195,
+                10: 0.0095
+            }[target];
+
+            const mannitol = mannitolCoefficient * volume * 0.001 * 182.2;
+            const glucosePowder = glucoseSolution * 0.001 * 0.5;
+
+            // 显示结果
+            document.getElementById("glucoseSolution").textContent = glucoseSolution.toFixed(2);
+            document.getElementById("mannitol").textContent = mannitol.toFixed(4);
+            document.getElementById("glucosePowder").textContent = glucosePowder.toFixed(4);
+        }
+
+        // 初始化
+        updateBaseConcentration();
+    </script>
+</body>
+</html>
